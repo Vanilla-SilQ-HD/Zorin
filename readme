@@ -1,8 +1,48 @@
 # Zorin OS — скрипты настройки и проверки
 
-Набор скриптов для постустановочной настройки Zorin OS (Ubuntu/Debian-основа): ускорение системы, питание (TLP), загрузчик systemd-boot + UKI с Windows по умолчанию и быстрая/расширенная проверка конфигурации.
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![Shell](https://img.shields.io/badge/Shell-Bash-green.svg)](https://www.gnu.org/software/bash/)
+[![platform](https://img.shields.io/badge/platform-Linux%20%7C%20Zorin-lightgrey)](https://zorin.com/os/)
 
-**Требования:** Zorin OS (или совместимый дистрибутив). Для режима загрузчика — загрузка в UEFI и смонтированный ESP на `/boot/efi`.
+Набор скриптов для постустановочной настройки **Zorin OS** (Ubuntu/Debian): ускорение системы, питание (TLP), загрузчик **systemd-boot + UKI** с Windows по умолчанию и быстрая/расширенная проверка конфигурации.
+
+**Требования:** Zorin OS или совместимый дистрибутив. Для режима загрузчика — загрузка в **UEFI** и смонтированный **ESP** на `/boot/efi`.
+
+---
+
+## Запуск без клонирования (curl)
+
+Скрипт **zorin-master.sh** самодостаточный — его можно запускать по однострочнику через `curl`. Сначала лучше просмотреть код: открой ссылку в браузере или выполни `curl -fsSL … | less`.
+
+**Базовый URL (ветка main):**
+
+```
+https://raw.githubusercontent.com/Vanilla-SilQ-HD/Zorin/main/scripts/zorin-master.sh
+```
+
+**Примеры (подставь нужный режим):**
+
+```bash
+# Полная настройка: postinstall → systemdboot → verify
+curl -fsSL https://raw.githubusercontent.com/Vanilla-SilQ-HD/Zorin/main/scripts/zorin-master.sh | sudo bash -s -- --all
+
+# Только пост-установка (пакеты, TLP, ZRAM, earlyoom, sysctl)
+curl -fsSL https://raw.githubusercontent.com/Vanilla-SilQ-HD/Zorin/main/scripts/zorin-master.sh | sudo bash -s -- --postinstall
+
+# Только загрузчик (systemd-boot + UKI, Windows default, Firmware скрыт)
+curl -fsSL https://raw.githubusercontent.com/Vanilla-SilQ-HD/Zorin/main/scripts/zorin-master.sh | sudo bash -s -- --systemdboot
+
+# Быстрая проверка (без sudo можно, но меньше деталей)
+curl -fsSL https://raw.githubusercontent.com/Vanilla-SilQ-HD/Zorin/main/scripts/zorin-master.sh | bash -s -- --verify
+
+# Расширенная проверка (NVIDIA, батарея, NVMe, sleep)
+curl -fsSL https://raw.githubusercontent.com/Vanilla-SilQ-HD/Zorin/main/scripts/zorin-master.sh | sudo bash -s -- --verify-plus
+
+# Предполётная проверка перед --systemdboot (UEFI, ESP, место, Windows EFI)
+curl -fsSL https://raw.githubusercontent.com/Vanilla-SilQ-HD/Zorin/main/scripts/zorin-master.sh | bash -s -- --check
+```
+
+> Запуск по curl выполняется **на свой риск**. Рекомендуется сначала просмотреть скрипт или клонировать репо и запускать локально.
 
 ---
 
@@ -10,75 +50,104 @@
 
 ```
 Zorin/
-├── readme              # этот файл
+├── LICENSE
+├── readme                 # этот файл
+├── .gitignore
+├── .github/workflows/
+│   └── shellcheck.yml     # проверка скриптов при push/PR
+├── configs/               # опциональные профили TLP
+│   ├── README.md
+│   ├── tlp-battery.conf
+│   └── tlp-performance.conf
 └── scripts/
-    ├── zorin-master.sh                  # единая точка входа (все режимы)
-    ├── zorin-lib.sh                     # общие функции для verify-скриптов
-    ├── zorin-postinstall.sh             # только пост-установка (пакеты + питание)
-    ├── zorin-systemdboot-windows-default.sh  # только systemd-boot + UKI
-    ├── zorin-verify.sh                  # быстрая проверка
-    └── zorin-verify-plus.sh             # расширенная проверка
+    ├── zorin-master.sh    # единая точка входа (все режимы, в т.ч. curl)
+    ├── zorin-lib.sh       # общие функции для verify-скриптов
+    ├── zorin-postinstall.sh
+    ├── zorin-systemdboot-windows-default.sh
+    ├── zorin-verify.sh
+    └── zorin-verify-plus.sh
 ```
 
-- **zorin-master.sh** — самодостаточный скрипт: можно скопировать один файл и запускать с флагами. Вся логика внутри, без зависимостей от других файлов.
-- **zorin-verify.sh** и **zorin-verify-plus.sh** подключают `zorin-lib.sh` (функции вывода и проверки сервисов). Запускать из каталога `scripts/` или указывать путь к `scripts/` при вызове.
+- **zorin-master.sh** — один файл, без зависимостей: подходит и для curl, и для локального запуска.
+- **zorin-verify.sh** / **zorin-verify-plus.sh** подключают `zorin-lib.sh` — их запускают из каталога `scripts/` или после клонирования репо.
 
 ---
 
-## Рекомендуемый способ: один скрипт (master)
+## Режимы master-скрипта
 
-Удобно использовать один файл `zorin-master.sh` с флагами.
+| Режим | Описание | Локально | Через curl |
+|-------|----------|----------|------------|
+| **--postinstall** | Пакеты, TLP, ZRAM, earlyoom, sysctl. Без загрузчика. | `sudo ./zorin-master.sh --postinstall` | `curl -fsSL …/zorin-master.sh \| sudo bash -s -- --postinstall` |
+| **--systemdboot** | systemd-boot + UKI, Windows default, Firmware скрыт. | `sudo ./zorin-master.sh --systemdboot` | `curl -fsSL …/zorin-master.sh \| sudo bash -s -- --systemdboot` |
+| **--verify** | Быстрая проверка (UEFI, loader, записи, UKI, hook). | `./zorin-master.sh --verify` | `curl -fsSL …/zorin-master.sh \| bash -s -- --verify` |
+| **--verify-plus** | + сервисы, mem_sleep, swap, sysctl, NVIDIA, батарея, NVMe. | `sudo ./zorin-master.sh --verify-plus` | `curl -fsSL …/zorin-master.sh \| sudo bash -s -- --verify-plus` |
+| **--check** | Предполётная проверка перед --systemdboot (UEFI, ESP, место, bootctl/ukify). | `./zorin-master.sh --check` | `curl -fsSL …/zorin-master.sh \| bash -s -- --check` |
+| **--all** | postinstall → systemdboot → verify. | `sudo ./zorin-master.sh --all` | `curl -fsSL …/zorin-master.sh \| sudo bash -s -- --all` |
 
-### Установка
-
-```bash
-# Клонировать репо или скачать скрипт
-cd /path/to/Zorin/scripts
-chmod +x zorin-master.sh
-```
-
-### Режимы и запуск
-
-| Режим | Описание | Команда |
-|-------|----------|--------|
-| **--postinstall** | Пакеты, питание (TLP), ZRAM, earlyoom, sysctl (BBR, fq, vm). Без загрузчика. Идемпотентный, бэкапы перед изменением конфигов. | `sudo ./zorin-master.sh --postinstall` |
-| **--systemdboot** | systemd-boot + UKI, Windows по умолчанию, пункт Firmware скрыт (`auto-firmware no`). Бэкап ESP перед изменениями. | `sudo ./zorin-master.sh --systemdboot` |
-| **--verify** | Быстрая проверка: UEFI, loader.conf, записи Windows/Zorin, UKI, hook, без вывода сервисов. | `./zorin-master.sh --verify` или с `sudo` |
-| **--verify-plus** | Всё из verify + сервисы (TLP, ZRAM, TRIM, irqbalance, earlyoom), mem_sleep, swap, sysctl, platform_profile, NVIDIA, батарея, NVMe SMART. | `sudo ./zorin-master.sh --verify-plus` |
-| **--all** | Последовательно: postinstall → systemdboot → verify. | `sudo ./zorin-master.sh --all` |
-
-При запуске с `sudo` вывод дублируется в `/var/log/zorin-master.log`.
+При запуске с `sudo` вывод пишется в `/var/log/zorin-master.log`.
 
 ### Важно про --systemdboot
 
 - **Меняет загрузчик.** Запускай только когда Windows нормально грузится и ESP смонтирован на `/boot/efi`.
 - Пункт **Firmware Settings** не переименовываем (это ломает ряд прошивок), а **скрываем** через `auto-firmware no` в systemd-boot.
+- Перед первым запуском полезно выполнить `--check`.
 
 ---
 
-## Отдельные скрипты (без master)
+## Локальная установка (клонирование)
 
-Если нужен только один сценарий, можно вызывать скрипты по отдельности из каталога `scripts/`:
+```bash
+git clone https://github.com/Vanilla-SilQ-HD/Zorin.git
+cd Zorin/scripts
+chmod +x zorin-master.sh
+sudo ./zorin-master.sh --postinstall   # пример
+```
 
-| Скрипт | Назначение | Запуск |
-|--------|------------|--------|
-| **zorin-postinstall.sh** | Только пост-установка: пакеты, TLP, ZRAM, earlyoom, sysctl. Загрузчик не трогает. | `sudo bash zorin-postinstall.sh` |
-| **zorin-systemdboot-windows-default.sh** | Только настройка systemd-boot + UKI (Windows default, firmware скрыт). | `sudo bash zorin-systemdboot-windows-default.sh` |
-| **zorin-verify.sh** | Быстрая проверка (UEFI, загрузчик, записи, UKI, hook, сервисы). | `sudo bash zorin-verify.sh` или `./zorin-verify.sh` |
-| **zorin-verify-plus.sh** | Расширенная проверка (+ NVIDIA, батарея, NVMe SMART, sleep, BootOrder, sysctl, platform_profile). | `sudo bash zorin-verify-plus.sh` |
+Отдельные скрипты (без master) можно вызывать так:
 
-Логи отдельных скриптов:  
-`/var/log/zorin-postinstall.log`, `/var/log/zorin-systemdboot.log`.
+| Скрипт | Запуск |
+|--------|--------|
+| zorin-postinstall.sh | `sudo bash scripts/zorin-postinstall.sh` |
+| zorin-systemdboot-windows-default.sh | `sudo bash scripts/zorin-systemdboot-windows-default.sh` |
+| zorin-verify.sh | `bash scripts/zorin-verify.sh` или с `sudo` |
+| zorin-verify-plus.sh | `sudo bash scripts/zorin-verify-plus.sh` |
+
+Логи: `/var/log/zorin-postinstall.log`, `/var/log/zorin-systemdboot.log`.
 
 ---
 
-## Краткое код-ревью
+## Опциональные конфиги (TLP)
 
-- **Единообразие:** везде `set -euo pipefail`, проверка root где нужно, `apt-get` + обёртка `apt_safe` (confdef/confold), `DEBIAN_FRONTEND=noninteractive`. Конфиги после записи получают `chmod 0644`.
-- **Безопасность:** перед перезаписью конфигов делаются бэкапы (zramswap в postinstall; ESP и efibootmgr в systemdboot). Kernel-hook UKI не ломает установку ядра (при ошибке выходит с 0).
-- **Идемпотентность:** повторный запуск postinstall/systemdboot не ломает систему; конфиги приводятся к одному и тому же состоянию.
-- **Разделение:** «меняющие» скрипты (postinstall, systemdboot) и «только проверка» (verify/verify-plus). В master порядок `--all`: postinstall → systemdboot → verify (без verify-plus в конце).
-- **Замечания:** в `zorin-lib.sh` у `svc()` добавлено подавление stderr у `list-unit-files` при отсутствии прав, чтобы не засорять вывод. Standalone `zorin-verify.sh` включает проверку сервисов; в master в быстром `do_verify()` сервисы не выводятся — только в `do_verify_plus()`. Это осознанное различие: master «verify» максимально быстрый.
+В каталоге **configs/** лежат альтернативные профили TLP:
+
+- **tlp-battery.conf** — максимум батареи.
+- **tlp-performance.conf** — максимум производительности.
+
+Они не обязательны: postinstall уже создаёт `99-zorin-snappy.conf`. Подробнее — в [configs/README.md](configs/README.md).
+
+---
+
+## Откат / восстановление
+
+- **Вернуть GRUB (если раньше был GRUB):** загрузиться с установочного носителя Zorin/Ubuntu, смонтировать корень и ESP, установить пакет `grub-efi-amd64`, выполнить `grub-install` на диск с ESP и `update-grub`. Либо восстановить из бэкапа ESP (в `--systemdboot` создаётся `/boot/efi/EFI/_backup_YYYYMMDD-HHMMSS/`).
+- **Попасть в систему, если меню не грузится:** загрузка с USB, монтирование раздела с корнем, правка конфигов или восстановление файлов из бэкапа ESP.
+- **Логи:** при запуске с sudo смотри `/var/log/zorin-master.log`, для отдельных скриптов — соответствующие логи в `/var/log/`.
+
+---
+
+## FAQ
+
+**Windows не появляется в меню systemd-boot.**  
+Проверь, что файл `/boot/efi/EFI/Microsoft/Boot/bootmgfw.efi` существует. Если Windows на другом диске или путь другой — отредактируй `/boot/efi/loader/entries/windows.conf` (или создай свою запись).
+
+**UKI не собирается (ukify ошибка).**  
+Нужны пакеты `systemd-ukify` и ядро с initrd в `/boot`. Выполни `--check` и установи зависимости: `sudo apt-get install systemd-ukify`. Для нестандартного root (LUKS/LVM) cmdline в скрипте может потребовать правки.
+
+**После postinstall ноутбук греется или батарея быстро садится.**  
+Профиль по умолчанию — «snappy» (баланс). Для экономии батареи можно подключить опциональный профиль из `configs/tlp-battery.conf`. Для максимальной производительности — `configs/tlp-performance.conf`.
+
+**Проверка скриптов в CI.**  
+В репозитории включён GitHub Actions workflow: при push/PR в `main` запускается [ShellCheck](https://github.com/koalaman/shellcheck) для файлов в `scripts/`.
 
 ---
 
@@ -89,3 +158,9 @@ chmod +x zorin-master.sh
 ```bash
 sudo reboot
 ```
+
+---
+
+## Лицензия
+
+[MIT](LICENSE).

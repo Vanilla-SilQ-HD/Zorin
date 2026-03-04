@@ -1,0 +1,13 @@
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor / temp
+*.swp
+*.swo
+*~
+*.bak
+*.tmp
+
+# Local copy of master in repo root (if you symlink or copy for testing)
+/zorin-master.sh

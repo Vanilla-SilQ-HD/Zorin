@@ -5,21 +5,16 @@ set -euo pipefail
 # Zorin Master Script
 # =============================================================================
 #
+# Запуск: локально (./zorin-master.sh) или через curl (см. readme в репо).
+#
 # 0) Как поставить и запустить
 #
-#   Создать файл:
-#     nano zorin-master.sh
-#   Вставить этот код, сохранить.
-#
-#   Сделать исполняемым:
+#   Локально:
 #     chmod +x zorin-master.sh
+#     sudo ./zorin-master.sh --all   # или --postinstall, --systemdboot и т.д.
 #
-#   Запуск (примеры):
-#     sudo ./zorin-master.sh --all
-#     sudo ./zorin-master.sh --postinstall
-#     sudo ./zorin-master.sh --systemdboot
-#     ./zorin-master.sh --verify
-#     sudo ./zorin-master.sh --verify-plus
+#   Через curl (без клонирования):
+#     curl -fsSL https://raw.githubusercontent.com/Vanilla-SilQ-HD/Zorin/main/scripts/zorin-master.sh | sudo bash -s -- --all
 #
 # Режимы:
 #   --postinstall   Пакеты, питание, ускорение (безопасно). Идемпотентный, с бэкапами.
@@ -105,6 +100,42 @@ require_esp_mounted() {
   else
     ok "ESP mount OK: /boot/efi (vfat)"
   fi
+}
+
+# =========================
+# CHECK (pre-flight for --systemdboot)
+# =========================
+do_check() {
+  info "== CHECK: pre-flight for systemd-boot =="
+
+  [[ -d /sys/firmware/efi ]] && ok "UEFI mode: yes" || { fail "UEFI mode: no"; exit 1; }
+
+  if mountpoint -q /boot/efi 2>/dev/null; then
+    ok "ESP mounted: /boot/efi"
+    local fstype
+    fstype="$(findmnt -no FSTYPE /boot/efi 2>/dev/null || true)"
+    if [[ "${fstype:-}" == "vfat" ]]; then
+      ok "ESP fstype: vfat"
+    else
+      warn "ESP fstype: ${fstype:-unknown} (expected vfat)"
+    fi
+    local free_mb
+    free_mb="$(df -m /boot/efi 2>/dev/null | awk 'NR==2 {print $4}' || true)"
+    if [[ -n "${free_mb:-}" ]]; then
+      [[ "$free_mb" -ge 100 ]] && ok "ESP free space: ${free_mb} MB" || warn "ESP free space: ${free_mb} MB (recommend >= 100 MB)"
+    fi
+  else
+    fail "/boot/efi is not mounted (ESP)"
+    exit 1
+  fi
+
+  local win_efi="/boot/efi/EFI/Microsoft/Boot/bootmgfw.efi"
+  [[ -f "$win_efi" ]] && ok "Windows EFI: $win_efi" || warn "Windows EFI not found: $win_efi"
+
+  has bootctl && ok "bootctl present" || warn "bootctl not found (install systemd)"
+  has ukify && ok "ukify present" || warn "ukify not found (install systemd-ukify)"
+
+  ok "CHECK done. Fix warnings before --systemdboot."
 }
 
 # =========================
@@ -481,6 +512,7 @@ Usage:
        ./${SCRIPT_NAME}.sh --verify        # быстрая проверка
   sudo ./${SCRIPT_NAME}.sh --verify-plus   # расширенная проверка (NVIDIA, батарея, NVMe, sleep)
   sudo ./${SCRIPT_NAME}.sh --all          # postinstall → systemdboot → verify
+       ./${SCRIPT_NAME}.sh --check        # предполётная проверка перед --systemdboot
 
 Важно: --systemdboot меняет загрузчик. Запускай, когда Windows грузится и ESP на месте.
         Firmware скрыт через auto-firmware no (не переименовываем).
@@ -498,6 +530,9 @@ main() {
   ensure_log
 
   case "$1" in
+    --check)
+      do_check
+      ;;
     --postinstall)
       do_postinstall
       ;;
