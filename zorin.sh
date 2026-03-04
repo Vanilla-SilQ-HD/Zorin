@@ -203,12 +203,12 @@ if [ ! -s "$TEMPD/zorin-os.gpg" ]; then
 fi
 
 if [ "$version" = "18" ]; then
-  if ! curl -L -H 'DNT: 1' -H 'Sec-GPC: 1' --output "$TEMPD/zorin-os-premium-18.gpg" \
-    "${REPO_RAW_BASE}/raw/zorin-os-premium-18.gpg"; then
+  if ! curl -L -H 'DNT: 1' -H 'Sec-GPC: 1' --output "$TEMPD/zorin-os-premium-eighteen.gpg" \
+    "${REPO_RAW_BASE}/raw/zorin-os-premium-eighteen.gpg"; then
     echo "Error: Failed to download premium public GPG key."
     exit 1
   fi
-  if [ ! -s "$TEMPD/zorin-os-premium-18.gpg" ]; then
+  if [ ! -s "$TEMPD/zorin-os-premium-eighteen.gpg" ]; then
     echo "Error: Downloaded premium public GPG key file is empty or missing."
     exit 1
   fi
@@ -226,21 +226,21 @@ fi
 
 sudo chmod 644 "$TEMPD/zorin-os.gpg"
 if [ "$version" = "18" ]; then
-  sudo chmod 644 "$TEMPD/zorin-os-premium-18.gpg"
+  sudo chmod 644 "$TEMPD/zorin-os-premium-eighteen.gpg"
 else
   sudo chmod 644 "$TEMPD/zorin-os-premium.gpg"
 fi
 
 sudo cp --no-clobber "$TEMPD/zorin-os.gpg" /etc/apt/trusted.gpg.d/zorin-os.gpg
 if [ "$version" = "18" ]; then
-  sudo cp --no-clobber "$TEMPD/zorin-os-premium-18.gpg" /etc/apt/trusted.gpg.d/zorin-os-premium-18.gpg
+  sudo cp --no-clobber "$TEMPD/zorin-os-premium-eighteen.gpg" /etc/apt/trusted.gpg.d/zorin-os-premium-eighteen.gpg
 else
   sudo cp --no-clobber "$TEMPD/zorin-os-premium.gpg" /etc/apt/trusted.gpg.d/zorin-os-premium.gpg
 fi
 
 sudo chown root:root /etc/apt/trusted.gpg.d/zorin-os.gpg
 if [ "$version" = "18" ]; then
-  sudo chown root:root /etc/apt/trusted.gpg.d/zorin-os-premium-18.gpg
+  sudo chown root:root /etc/apt/trusted.gpg.d/zorin-os-premium-eighteen.gpg
 else
   sudo chown root:root /etc/apt/trusted.gpg.d/zorin-os-premium.gpg
 fi

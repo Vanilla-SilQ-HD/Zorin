@@ -546,8 +546,8 @@ main() {
       do_verify_plus
       ;;
     --all)
-      do_postinstall
-      do_systemdboot
+      do_postinstall "$@"
+      do_systemdboot "$@"
       do_verify
       ok "ALL done. Reboot recommended."
       ;;

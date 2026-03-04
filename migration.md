@@ -23,7 +23,7 @@
 | `make_dummy_deb.sh` | Сборка dummy-пакетов |
 | `raw/zorin-os.gpg` | Публичный ключ Zorin OS |
 | `raw/zorin-os-premium.gpg` | Публичный ключ Premium (Zorin 16/17) |
-| `raw/zorin-os-premium-18.gpg` | Публичный ключ Premium (Zorin 18) |
+| `raw/zorin-os-premium-eighteen.gpg` | Публичный ключ Premium (Zorin 18) |
 
 Файлы `raw/*.gpg` в этом клоне могут отсутствовать (они в оригинальном репо). Скачать их один раз:
 
@@ -34,8 +34,8 @@ curl -fsSL -o raw/zorin-os.gpg \
   "https://github.com/NanashiTheNameless/Zorin-OS-Pro/raw/refs/heads/main/raw/zorin-os.gpg"
 curl -fsSL -o raw/zorin-os-premium.gpg \
   "https://github.com/NanashiTheNameless/Zorin-OS-Pro/raw/refs/heads/main/raw/zorin-os-premium.gpg"
-curl -fsSL -o raw/zorin-os-premium-18.gpg \
-  "https://github.com/NanashiTheNameless/Zorin-OS-Pro/raw/refs/heads/main/raw/zorin-os-premium-18.gpg"
+curl -fsSL -o raw/zorin-os-premium-eighteen.gpg \
+  "https://github.com/NanashiTheNameless/Zorin-OS-Pro/raw/refs/heads/main/raw/zorin-os-premium-eighteen.gpg"
 ```
 
 В `zorin.sh` задать свой репо (в начале файла):

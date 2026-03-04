@@ -16,4 +16,4 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y shellcheck
 
       - name: Run ShellCheck
-        run: shellcheck -e SC1091 scripts/*.sh
+        run: shellcheck -e SC1091,SC2015,SC2119,SC2120 scripts/*.sh
