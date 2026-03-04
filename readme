@@ -1,0 +1,91 @@
+# Zorin OS — скрипты настройки и проверки
+
+Набор скриптов для постустановочной настройки Zorin OS (Ubuntu/Debian-основа): ускорение системы, питание (TLP), загрузчик systemd-boot + UKI с Windows по умолчанию и быстрая/расширенная проверка конфигурации.
+
+**Требования:** Zorin OS (или совместимый дистрибутив). Для режима загрузчика — загрузка в UEFI и смонтированный ESP на `/boot/efi`.
+
+---
+
+## Структура репозитория
+
+```
+Zorin/
+├── readme              # этот файл
+└── scripts/
+    ├── zorin-master.sh                  # единая точка входа (все режимы)
+    ├── zorin-lib.sh                     # общие функции для verify-скриптов
+    ├── zorin-postinstall.sh             # только пост-установка (пакеты + питание)
+    ├── zorin-systemdboot-windows-default.sh  # только systemd-boot + UKI
+    ├── zorin-verify.sh                  # быстрая проверка
+    └── zorin-verify-plus.sh             # расширенная проверка
+```
+
+- **zorin-master.sh** — самодостаточный скрипт: можно скопировать один файл и запускать с флагами. Вся логика внутри, без зависимостей от других файлов.
+- **zorin-verify.sh** и **zorin-verify-plus.sh** подключают `zorin-lib.sh` (функции вывода и проверки сервисов). Запускать из каталога `scripts/` или указывать путь к `scripts/` при вызове.
+
+---
+
+## Рекомендуемый способ: один скрипт (master)
+
+Удобно использовать один файл `zorin-master.sh` с флагами.
+
+### Установка
+
+```bash
+# Клонировать репо или скачать скрипт
+cd /path/to/Zorin/scripts
+chmod +x zorin-master.sh
+```
+
+### Режимы и запуск
+
+| Режим | Описание | Команда |
+|-------|----------|--------|
+| **--postinstall** | Пакеты, питание (TLP), ZRAM, earlyoom, sysctl (BBR, fq, vm). Без загрузчика. Идемпотентный, бэкапы перед изменением конфигов. | `sudo ./zorin-master.sh --postinstall` |
+| **--systemdboot** | systemd-boot + UKI, Windows по умолчанию, пункт Firmware скрыт (`auto-firmware no`). Бэкап ESP перед изменениями. | `sudo ./zorin-master.sh --systemdboot` |
+| **--verify** | Быстрая проверка: UEFI, loader.conf, записи Windows/Zorin, UKI, hook, без вывода сервисов. | `./zorin-master.sh --verify` или с `sudo` |
+| **--verify-plus** | Всё из verify + сервисы (TLP, ZRAM, TRIM, irqbalance, earlyoom), mem_sleep, swap, sysctl, platform_profile, NVIDIA, батарея, NVMe SMART. | `sudo ./zorin-master.sh --verify-plus` |
+| **--all** | Последовательно: postinstall → systemdboot → verify. | `sudo ./zorin-master.sh --all` |
+
+При запуске с `sudo` вывод дублируется в `/var/log/zorin-master.log`.
+
+### Важно про --systemdboot
+
+- **Меняет загрузчик.** Запускай только когда Windows нормально грузится и ESP смонтирован на `/boot/efi`.
+- Пункт **Firmware Settings** не переименовываем (это ломает ряд прошивок), а **скрываем** через `auto-firmware no` в systemd-boot.
+
+---
+
+## Отдельные скрипты (без master)
+
+Если нужен только один сценарий, можно вызывать скрипты по отдельности из каталога `scripts/`:
+
+| Скрипт | Назначение | Запуск |
+|--------|------------|--------|
+| **zorin-postinstall.sh** | Только пост-установка: пакеты, TLP, ZRAM, earlyoom, sysctl. Загрузчик не трогает. | `sudo bash zorin-postinstall.sh` |
+| **zorin-systemdboot-windows-default.sh** | Только настройка systemd-boot + UKI (Windows default, firmware скрыт). | `sudo bash zorin-systemdboot-windows-default.sh` |
+| **zorin-verify.sh** | Быстрая проверка (UEFI, загрузчик, записи, UKI, hook, сервисы). | `sudo bash zorin-verify.sh` или `./zorin-verify.sh` |
+| **zorin-verify-plus.sh** | Расширенная проверка (+ NVIDIA, батарея, NVMe SMART, sleep, BootOrder, sysctl, platform_profile). | `sudo bash zorin-verify-plus.sh` |
+
+Логи отдельных скриптов:  
+`/var/log/zorin-postinstall.log`, `/var/log/zorin-systemdboot.log`.
+
+---
+
+## Краткое код-ревью
+
+- **Единообразие:** везде `set -euo pipefail`, проверка root где нужно, `apt-get` + обёртка `apt_safe` (confdef/confold), `DEBIAN_FRONTEND=noninteractive`. Конфиги после записи получают `chmod 0644`.
+- **Безопасность:** перед перезаписью конфигов делаются бэкапы (zramswap в postinstall; ESP и efibootmgr в systemdboot). Kernel-hook UKI не ломает установку ядра (при ошибке выходит с 0).
+- **Идемпотентность:** повторный запуск postinstall/systemdboot не ломает систему; конфиги приводятся к одному и тому же состоянию.
+- **Разделение:** «меняющие» скрипты (postinstall, systemdboot) и «только проверка» (verify/verify-plus). В master порядок `--all`: postinstall → systemdboot → verify (без verify-plus в конце).
+- **Замечания:** в `zorin-lib.sh` у `svc()` добавлено подавление stderr у `list-unit-files` при отсутствии прав, чтобы не засорять вывод. Standalone `zorin-verify.sh` включает проверку сервисов; в master в быстром `do_verify()` сервисы не выводятся — только в `do_verify_plus()`. Это осознанное различие: master «verify» максимально быстрый.
+
+---
+
+## После выполнения
+
+После `--postinstall` или `--systemdboot` рекомендуется перезагрузка:
+
+```bash
+sudo reboot
+```
