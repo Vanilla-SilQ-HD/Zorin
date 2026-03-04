@@ -2,7 +2,7 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")" && pwd)"
-# shellcheck source=zorin-lib.sh
+# shellcheck disable=SC1091
 . "${SCRIPT_DIR}/zorin-lib.sh"
 
 echo "== Zorin verify PLUS =="

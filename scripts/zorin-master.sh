@@ -122,7 +122,7 @@ do_check() {
     local free_mb
     free_mb="$(df -m /boot/efi 2>/dev/null | awk 'NR==2 {print $4}' || true)"
     if [[ -n "${free_mb:-}" ]]; then
-      [[ "$free_mb" -ge 100 ]] && ok "ESP free space: ${free_mb} MB" || warn "ESP free space: ${free_mb} MB (recommend >= 100 MB)"
+      [[ "${free_mb:-0}" -ge 100 ]] && ok "ESP free space: ${free_mb} MB" || warn "ESP free space: ${free_mb} MB (recommend >= 100 MB)"
     fi
   else
     fail "/boot/efi is not mounted (ESP)"
