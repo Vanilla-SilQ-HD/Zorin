@@ -29,7 +29,7 @@ set -euo pipefail
 #   переименовываем (это ломучая часть), а скрываем через auto-firmware no.
 #
 # =============================================================================
-
+# shellcheck disable=SC2015,SC2119,SC2120
 SCRIPT_NAME="zorin-master"
 LOG_DIR="/var/log"
 LOG_FILE="${LOG_DIR}/${SCRIPT_NAME}.log"
@@ -142,7 +142,7 @@ do_check() {
 # POSTINSTALL (safe)
 # =========================
 do_postinstall() {
-  need_root
+  need_root "$@"
   info "== POSTINSTALL: safe performance + power =="
 
   info "[1/8] Update system"
@@ -228,7 +228,7 @@ EOF
 # Меняет загрузчик — запускай, когда Windows грузится и ESP на месте.
 # =========================
 do_systemdboot() {
-  need_root
+  need_root "$@"
   info "== SYSTEMD-BOOT: Windows default + UKI + firmware hidden =="
 
   require_uefi

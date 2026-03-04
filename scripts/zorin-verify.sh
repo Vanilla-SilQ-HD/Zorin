@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
-
+# shellcheck disable=SC2015
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")" && pwd)"
 # shellcheck disable=SC1091
 . "${SCRIPT_DIR}/zorin-lib.sh"

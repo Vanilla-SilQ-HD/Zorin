@@ -21,7 +21,7 @@ svc() {
     else
       warn "$pretty not active"
     fi
-  } else
+  else
     warn "$pretty not installed"
   fi
 }
