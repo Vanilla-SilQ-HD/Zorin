@@ -1,6 +1,6 @@
 # Zorin OS — скрипты настройки и проверки
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](license)
 [![Shell](https://img.shields.io/badge/Shell-Bash-green.svg)](https://www.gnu.org/software/bash/)
 [![platform](https://img.shields.io/badge/platform-Linux%20%7C%20Zorin-lightgrey)](https://zorin.com/os/)
 
@@ -50,13 +50,13 @@ curl -fsSL https://raw.githubusercontent.com/Vanilla-SilQ-HD/Zorin/main/scripts/
 
 ```
 Zorin/
-├── LICENSE
+├── license
 ├── readme                 # этот файл
 ├── .gitignore
 ├── .github/workflows/
 │   └── shellcheck.yml     # проверка скриптов при push/PR
 ├── configs/               # опциональные профили TLP
-│   ├── README.md
+│   ├── readme.md
 │   ├── tlp-battery.conf
 │   └── tlp-performance.conf
 └── scripts/
@@ -123,7 +123,7 @@ sudo ./zorin-master.sh --postinstall   # пример
 - **tlp-battery.conf** — максимум батареи.
 - **tlp-performance.conf** — максимум производительности.
 
-Они не обязательны: postinstall уже создаёт `99-zorin-snappy.conf`. Подробнее — в [configs/README.md](configs/README.md).
+Они не обязательны: postinstall уже создаёт `99-zorin-snappy.conf`. Подробнее — в [configs/readme.md](configs/readme.md).
 
 ---
 
@@ -163,4 +163,4 @@ sudo reboot
 
 ## Лицензия
 
-[MIT](LICENSE).
+[MIT](license).
