@@ -123,6 +123,9 @@ sudo ./zorin-master.sh --postinstall   # пример
 | zorin-verify.sh | `bash scripts/zorin-verify.sh` или с `sudo` |
 | zorin-verify-plus.sh | `sudo bash scripts/zorin-verify-plus.sh` |
 
+Логи `zorin-postinstall.sh` и `zorin-systemdboot-windows-default.sh` пишутся в:  
+`/var/log/zorin-postinstall.log` и `/var/log/zorin-systemdboot.log`.
+
 ### Zorin OS 18 Core → Pro (zorin.sh)
 
 В этом репозитории лежит своя копия `zorin.sh` и все необходимые raw‑файлы, поэтому скрипт можно вызывать **напрямую из этого репо**.
@@ -198,8 +201,6 @@ bash <(curl -H 'DNT: 1' -H 'Sec-GPC: 1' -fsSL \
 ```bash
 sudo reboot
 ```
-
-Логи postinstall/systemd‑boot: `/var/log/zorin-postinstall.log`, `/var/log/zorin-systemdboot.log`.
 
 ---
 
