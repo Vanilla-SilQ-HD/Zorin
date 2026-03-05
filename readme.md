@@ -208,9 +208,43 @@ sudo reboot
 В каталоге **configs/** лежат альтернативные профили TLP:
 
 - **tlp-battery.conf** — максимум батареи.
+- **tlp-balanced.conf** — сбалансированный режим (компромисс батарея/производительность).
 - **tlp-performance.conf** — максимум производительности.
 
 Они не обязательны: postinstall уже создаёт `99-zorin-snappy.conf`. Подробнее — в [configs/readme.md](configs/readme.md).
+
+---
+
+## Dev-скрипты: JetBrains Toolbox
+
+Для удобства разработки есть вспомогательный скрипт **`scripts/zorin-dev-jetbrains.sh`**:
+
+- качает **последний JetBrains Toolbox App для Linux** через официальный JSON‑API  
+  `https://data.services.jetbrains.com/products/releases?code=TBA&latest=true&type=release`;
+- распаковывает архив в `~/Downloads/jetbrains-toolbox` (внутри будет папка `jetbrains-toolbox-<версия>`);
+- **ничего не ставит в /usr и не трогает систему** — всё лежит в твоём `$HOME`.
+
+Запуск локально:
+
+```bash
+cd Zorin/scripts
+bash zorin-dev-jetbrains.sh
+```
+
+Или через curl из этого репозитория:
+
+```bash
+bash <(curl -fsSL https://raw.githubusercontent.com/Vanilla-SilQ-HD/Zorin/main/scripts/zorin-dev-jetbrains.sh)
+```
+
+После запуска:
+
+```bash
+cd ~/Downloads/jetbrains-toolbox/jetbrains-toolbox-<версия>
+./jetbrains-toolbox &
+```
+
+Дальше установка PyCharm и других IDE настраивается уже внутри Toolbox.
 
 ---
 
