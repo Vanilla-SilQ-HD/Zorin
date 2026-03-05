@@ -3,6 +3,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](license)
 [![Shell](https://img.shields.io/badge/Shell-Bash-green.svg)](https://www.gnu.org/software/bash/)
 [![platform](https://img.shields.io/badge/platform-Linux%20%7C%20Zorin-lightgrey)](https://zorin.com/os/)
+[![ShellCheck](https://github.com/Vanilla-SilQ-HD/Zorin/actions/workflows/shellcheck.yml/badge.svg)](https://github.com/Vanilla-SilQ-HD/Zorin/actions/workflows/shellcheck.yml)
 
 Набор скриптов для постустановочной настройки **Zorin OS** (Ubuntu/Debian): ускорение системы, питание (TLP), загрузчик **systemd-boot + UKI** с Windows по умолчанию и быстрая/расширенная проверка конфигурации.
 
