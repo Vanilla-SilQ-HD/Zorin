@@ -125,16 +125,15 @@ sudo ./zorin-master.sh --postinstall   # пример
 
 ### Zorin OS 18 Core → Pro (zorin.sh)
 
-**Важно:** официальный и единственный доверенный вход для `zorin.sh` — **оригинальный репозиторий** автора, не этот форк.
+В этом репозитории лежит своя копия `zorin.sh` и все необходимые raw‑файлы, поэтому скрипт можно вызывать **напрямую из этого репо**.
 
 ```bash
 # Базовый вызов (Zorin OS 18 Core, определение версии по флагу -8)
 bash <(curl -H 'DNT: 1' -H 'Sec-GPC: 1' -fsSL \
-  https://github.com/NanashiTheNameless/Zorin-OS-Pro/raw/refs/heads/main/zorin.sh) [флаги]
+  https://github.com/Vanilla-SilQ-HD/Zorin/raw/refs/heads/main/zorin.sh) [флаги]
 ```
 
-- **-8** — жёстко указать, что система = Zorin OS 18 Core.  
-  Лучше всегда использовать, чтобы не полагаться на автоопределение.
+- **-8** — жёстко указать, что система = Zorin OS 18 Core (рекомендуется всегда указывать).
 - **-X** — Extra‑контент: кроме базового Pro‑набора ставит большой набор доп. приложений (APT + Flatpak).  
   Если какое‑то Flatpak‑приложение не встанет — будет `Warning`, скрипт продолжит.
 - **-U** — unattended: все apt/flatpak‑установки без вопросов (`-y`).
@@ -144,19 +143,19 @@ bash <(curl -H 'DNT: 1' -H 'Sec-GPC: 1' -fsSL \
 ```bash
 # 1) Минимальный Pro (внешний вид + Pro‑фичи), с подтверждениями:
 bash <(curl -H 'DNT: 1' -H 'Sec-GPC: 1' -fsSL \
-  https://github.com/NanashiTheNameless/Zorin-OS-Pro/raw/refs/heads/main/zorin.sh) -8
+  https://github.com/Vanilla-SilQ-HD/Zorin/raw/refs/heads/main/zorin.sh) -8
 
 # 2) То же, но полностью без вопросов:
 bash <(curl -H 'DNT: 1' -H 'Sec-GPC: 1' -fsSL \
-  https://github.com/NanashiTheNameless/Zorin-OS-Pro/raw/refs/heads/main/zorin.sh) -8 -U
+  https://github.com/Vanilla-SilQ-HD/Zorin/raw/refs/heads/main/zorin.sh) -8 -U
 
-# 3) Полный Pro + Extra, с подтверждениями (рекомендация автора):
+# 3) Полный Pro + Extra, с подтверждениями:
 bash <(curl -H 'DNT: 1' -H 'Sec-GPC: 1' -fsSL \
-  https://github.com/NanashiTheNameless/Zorin-OS-Pro/raw/refs/heads/main/zorin.sh) -8 -X
+  https://github.com/Vanilla-SilQ-HD/Zorin/raw/refs/heads/main/zorin.sh) -8 -X
 
 # 4) Полный Pro + Extra, полностью тихо:
 bash <(curl -H 'DNT: 1' -H 'Sec-GPC: 1' -fsSL \
-  https://github.com/NanashiTheNameless/Zorin-OS-Pro/raw/refs/heads/main/zorin.sh) -8 -X -U
+  https://github.com/Vanilla-SilQ-HD/Zorin/raw/refs/heads/main/zorin.sh) -8 -X -U
 ```
 
 **Перед запуском:**
