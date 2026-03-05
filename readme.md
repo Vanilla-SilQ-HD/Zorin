@@ -123,13 +123,74 @@ sudo ./zorin-master.sh --postinstall   # пример
 | zorin-verify.sh | `bash scripts/zorin-verify.sh` или с `sudo` |
 | zorin-verify-plus.sh | `sudo bash scripts/zorin-verify-plus.sh` |
 
-Zorin Core → Pro (однострочник с этого репо):
+### Zorin OS 18 Core → Pro (zorin.sh)
+
+**Важно:** официальный и единственный доверенный вход для `zorin.sh` — **оригинальный репозиторий** автора, не этот форк.
 
 ```bash
-bash <(curl -fsSL https://github.com/Vanilla-SilQ-HD/Zorin/raw/refs/heads/main/zorin.sh) -8 -X -U
+# Базовый вызов (Zorin OS 18 Core, определение версии по флагу -8)
+bash <(curl -H 'DNT: 1' -H 'Sec-GPC: 1' -fsSL \
+  https://github.com/NanashiTheNameless/Zorin-OS-Pro/raw/refs/heads/main/zorin.sh) [флаги]
 ```
 
-Логи: `/var/log/zorin-postinstall.log`, `/var/log/zorin-systemdboot.log`.
+- **-8** — жёстко указать, что система = Zorin OS 18 Core.  
+  Лучше всегда использовать, чтобы не полагаться на автоопределение.
+- **-X** — Extra‑контент: кроме базового Pro‑набора ставит большой набор доп. приложений (APT + Flatpak).  
+  Если какое‑то Flatpak‑приложение не встанет — будет `Warning`, скрипт продолжит.
+- **-U** — unattended: все apt/flatpak‑установки без вопросов (`-y`).
+
+**Практические варианты для Zorin 18 Core:**
+
+```bash
+# 1) Минимальный Pro (внешний вид + Pro‑фичи), с подтверждениями:
+bash <(curl -H 'DNT: 1' -H 'Sec-GPC: 1' -fsSL \
+  https://github.com/NanashiTheNameless/Zorin-OS-Pro/raw/refs/heads/main/zorin.sh) -8
+
+# 2) То же, но полностью без вопросов:
+bash <(curl -H 'DNT: 1' -H 'Sec-GPC: 1' -fsSL \
+  https://github.com/NanashiTheNameless/Zorin-OS-Pro/raw/refs/heads/main/zorin.sh) -8 -U
+
+# 3) Полный Pro + Extra, с подтверждениями (рекомендация автора):
+bash <(curl -H 'DNT: 1' -H 'Sec-GPC: 1' -fsSL \
+  https://github.com/NanashiTheNameless/Zorin-OS-Pro/raw/refs/heads/main/zorin.sh) -8 -X
+
+# 4) Полный Pro + Extra, полностью тихо:
+bash <(curl -H 'DNT: 1' -H 'Sec-GPC: 1' -fsSL \
+  https://github.com/NanashiTheNameless/Zorin-OS-Pro/raw/refs/heads/main/zorin.sh) -8 -X -U
+```
+
+**Перед запуском:**
+
+- стабильный интернет (APT + GitHub);  
+- установлен Flatpak, если планируешь `-X`;  
+- не менять руками `/etc/apt/sources.list.d/zorin.list` и `/etc/apt/trusted.gpg.d` во время работы;  
+- по возможности сначала проверить сценарий в VM/на тестовой машине;  
+- на боевой системе сделать snapshot/бэкап и поначалу запускать **без `-U`**, чтобы видеть список пакетов.
+
+**Что делает скрипт по сути (по коду):**
+
+- не трогает `/home`;  
+- работает через стандартные `apt`, `dpkg`, `flatpak`;  
+- правит только:
+  - `sources.list.d/zorin.list` (с бэкапом),  
+  - добавляет GPG‑ключи в `/etc/apt/trusted.gpg.d/`,  
+  - создаёт `apt.conf.d/99zorin-os-premium-user-agent`,  
+  - устанавливает/делает dummy‑пакеты `zorin-os-*`,  
+  - удаляет `zorin-os-census` и его cron‑таски.
+
+**Риски:**
+
+- это неофициальный инструмент, имитирующий Premium‑систему (юридические/этические последствия — на пользователе);  
+- серьёзное изменение репозиториев и большого числа пакетов → возможны конфликты при будущих обновлениях;  
+- флаг `-U` делает всё без переспросов — удобно, но снижает контроль.
+
+После завершения работы `zorin.sh` **обязательно перезагрузка**:
+
+```bash
+sudo reboot
+```
+
+Логи postinstall/systemd‑boot: `/var/log/zorin-postinstall.log`, `/var/log/zorin-systemdboot.log`.
 
 ---
 
