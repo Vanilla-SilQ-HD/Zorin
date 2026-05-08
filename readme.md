@@ -47,7 +47,7 @@ https://raw.githubusercontent.com/Vanilla-SilQ-HD/Zorin/main/scripts/zorin-maste
 curl -fsSL https://raw.githubusercontent.com/Vanilla-SilQ-HD/Zorin/main/scripts/zorin-master.sh | sudo bash -s -- --postinstall
 
 # Только загрузчик (advanced/experimental, не для первой установки dual-boot)
-curl -fsSL https://raw.githubusercontent.com/Vanilla-SilQ-HD/Zorin/main/scripts/zorin-master.sh | sudo bash -s -- --systemdboot
+curl -fsSL https://raw.githubusercontent.com/Vanilla-SilQ-HD/Zorin/main/scripts/zorin-master.sh | sudo ZORIN_ALLOW_BOOTLOADER_CHANGE=YES bash -s -- --systemdboot
 
 # Безопасный all-режим (без изменения загрузчика): postinstall → verify
 curl -fsSL https://raw.githubusercontent.com/Vanilla-SilQ-HD/Zorin/main/scripts/zorin-master.sh | sudo bash -s -- --all
@@ -108,7 +108,7 @@ Zorin/
 | Режим | Описание | Локально | Через curl |
 |-------|----------|----------|------------|
 | **--postinstall** | Пакеты, TLP, ZRAM, earlyoom, sysctl. Без загрузчика. | `sudo ./zorin-master.sh --postinstall` | `curl -fsSL …/zorin-master.sh \| sudo bash -s -- --postinstall` |
-| **--systemdboot** | **advanced/experimental**: systemd-boot + UKI, Windows default, Firmware скрыт. | `sudo ./zorin-master.sh --systemdboot` | `curl -fsSL …/zorin-master.sh \| sudo bash -s -- --systemdboot` |
+| **--systemdboot** | **advanced/experimental**: systemd-boot + UKI, Windows default, Firmware скрыт. | `sudo ZORIN_ALLOW_BOOTLOADER_CHANGE=YES ./zorin-master.sh --systemdboot` | `curl -fsSL …/zorin-master.sh \| sudo ZORIN_ALLOW_BOOTLOADER_CHANGE=YES bash -s -- --systemdboot` |
 | **--verify** | Быстрая проверка (UEFI, loader, записи, UKI, hook). | `./zorin-master.sh --verify` | `curl -fsSL …/zorin-master.sh \| bash -s -- --verify` |
 | **--verify-plus** | + сервисы, mem_sleep, swap, sysctl, NVIDIA, батарея, NVMe. | `sudo ./zorin-master.sh --verify-plus` | `curl -fsSL …/zorin-master.sh \| sudo bash -s -- --verify-plus` |
 | **--check** | Предполётная проверка перед --systemdboot. | `./zorin-master.sh --check` | `curl -fsSL …/zorin-master.sh \| bash -s -- --check` |
@@ -143,7 +143,7 @@ sudo ./zorin-master.sh --postinstall   # безопасный базовый ш�
 | Скрипт | Запуск |
 |--------|--------|
 | zorin-postinstall.sh | `sudo bash scripts/zorin-postinstall.sh` |
-| zorin-systemdboot-windows-default.sh | `sudo bash scripts/zorin-systemdboot-windows-default.sh` |
+| zorin-systemdboot-windows-default.sh | `sudo ZORIN_ALLOW_BOOTLOADER_CHANGE=YES bash scripts/zorin-systemdboot-windows-default.sh` |
 | zorin-verify.sh | `bash scripts/zorin-verify.sh` или с `sudo` |
 | zorin-verify-plus.sh | `sudo bash scripts/zorin-verify-plus.sh` |
 
