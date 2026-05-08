@@ -11,22 +11,24 @@ set -euo pipefail
 #
 #   Локально:
 #     chmod +x zorin-master.sh
-#     sudo ./zorin-master.sh --all   # или --postinstall, --systemdboot и т.д.
+#     sudo ./zorin-master.sh --postinstall   # безопасный базовый путь
 #
 #   Через curl (без клонирования):
-#     curl -fsSL https://raw.githubusercontent.com/Vanilla-SilQ-HD/Zorin/main/scripts/zorin-master.sh | sudo bash -s -- --all
+#     curl -fsSL https://raw.githubusercontent.com/Vanilla-SilQ-HD/Zorin/main/scripts/zorin-master.sh | sudo bash -s -- --postinstall
 #
 # Режимы:
 #   --postinstall   Пакеты, питание, ускорение (безопасно). Идемпотентный, с бэкапами.
-#   --systemdboot   systemd-boot + UKI, Windows по умолчанию, Firmware скрыт.
+#   --systemdboot   advanced/experimental: systemd-boot + UKI, Windows по умолчанию.
 #   --verify        Быстрая проверка (можно без sudo).
 #   --verify-plus   Расширенная проверка (NVIDIA, батарея, NVMe, sleep).
-#   --all           postinstall → systemdboot → verify.
+#   --all           postinstall → systemdboot → verify (не для первой установки dual-boot).
 #
 # Важно:
 #   --systemdboot меняет загрузчик. Безопасно при UEFI, но запускай, когда
 #   Windows грузится нормально и ESP смонтирован. Firmware Settings не
 #   переименовываем (это ломучая часть), а скрываем через auto-firmware no.
+#   Для свежего dual-boot сначала оставь стандартный GRUB, проверь загрузку
+#   Windows и Zorin, и только потом думай о --systemdboot.
 #
 # =============================================================================
 # shellcheck disable=SC2015,SC2119,SC2120
@@ -147,7 +149,7 @@ do_postinstall() {
 
   info "[1/8] Update system"
   apt-get update
-  apt_safe full-upgrade
+  apt_safe upgrade
 
   info "[2/8] Install essential packages"
   apt_safe install \
@@ -230,6 +232,9 @@ EOF
 do_systemdboot() {
   need_root "$@"
   info "== SYSTEMD-BOOT: Windows default + UKI + firmware hidden =="
+  warn "ADVANCED/EXPERIMENTAL: это меняет bootloader и UEFI BootOrder."
+  warn "Для первой загрузки свежего Windows dual-boot не рекомендуется."
+  warn "Сначала оставь GRUB и проверь, что Windows и Zorin загружаются штатно."
 
   require_uefi
   require_esp_mounted
@@ -302,7 +307,12 @@ EOF
 
   uki_dir="/boot/efi/EFI/Linux"
   mkdir -p "$uki_dir"
-  cmdline="root=UUID=${root_uuid} ro quiet splash mem_sleep_default=deep"
+  local extra_cmdline
+  extra_cmdline="${ZORIN_KERNEL_EXTRA_CMDLINE:-}"
+  cmdline="root=UUID=${root_uuid} ro quiet splash"
+  if [[ -n "${extra_cmdline// }" ]]; then
+    cmdline="${cmdline} ${extra_cmdline}"
+  fi
 
   ukify build \
     --linux "$vmlinuz" \
@@ -337,7 +347,11 @@ INITRD="/boot/initrd.img-${KVER}"
 UKI_DIR="/boot/efi/EFI/Linux"
 mkdir -p "$UKI_DIR" || exit 0
 
-CMDLINE="root=UUID=${ROOT_UUID} ro quiet splash mem_sleep_default=deep"
+EXTRA_CMDLINE="${ZORIN_KERNEL_EXTRA_CMDLINE:-}"
+CMDLINE="root=UUID=${ROOT_UUID} ro quiet splash"
+if [[ -n "${EXTRA_CMDLINE// }" ]]; then
+  CMDLINE="${CMDLINE} ${EXTRA_CMDLINE}"
+fi
 
 TMP="${UKI_DIR}/zorin.efi.tmp"
 if ukify build --linux "$VMLINUX" --initrd "$INITRD" --cmdline "$CMDLINE" --output "$TMP" >/dev/null 2>&1; then
@@ -508,14 +522,16 @@ usage() {
   cat <<EOF
 Usage:
   sudo ./${SCRIPT_NAME}.sh --postinstall   # пакеты, питание, ускорение (безопасно)
-  sudo ./${SCRIPT_NAME}.sh --systemdboot   # systemd-boot + UKI, Windows default, Firmware скрыт
+  sudo ./${SCRIPT_NAME}.sh --systemdboot   # ADVANCED/EXPERIMENTAL: меняет загрузчик и BootOrder
        ./${SCRIPT_NAME}.sh --verify        # быстрая проверка
   sudo ./${SCRIPT_NAME}.sh --verify-plus   # расширенная проверка (NVIDIA, батарея, NVMe, sleep)
-  sudo ./${SCRIPT_NAME}.sh --all          # postinstall → systemdboot → verify
+  sudo ./${SCRIPT_NAME}.sh --all          # postinstall → systemdboot → verify (не для первого dual-boot запуска)
        ./${SCRIPT_NAME}.sh --check        # предполётная проверка перед --systemdboot
 
-Важно: --systemdboot меняет загрузчик. Запускай, когда Windows грузится и ESP на месте.
+Важно: для свежего dual-boot сначала оставь GRUB и проверь загрузку Windows/Zorin.
+        --systemdboot меняет загрузчик и BootOrder. Запускай, когда Windows грузится и ESP на месте.
         Firmware скрыт через auto-firmware no (не переименовываем).
+        Доп. параметры ядра можно добавить через ZORIN_KERNEL_EXTRA_CMDLINE.
 Логи (при запуске с sudo): $LOG_FILE
 EOF
 }

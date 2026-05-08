@@ -15,6 +15,9 @@ apt_safe() {
 
 need_root
 echo "== systemd-boot + UKI (Windows default, firmware hidden) =="
+echo "WARNING: ADVANCED/EXPERIMENTAL path."
+echo "WARNING: This changes bootloader and UEFI BootOrder."
+echo "WARNING: For a fresh Windows dual-boot first keep GRUB and verify both OS boot."
 
 echo "[1/11] Check UEFI mode"
 [[ -d /sys/firmware/efi ]] || { echo "ERROR: Not booted in UEFI mode."; exit 1; }
@@ -97,7 +100,11 @@ INITRD="/boot/initrd.img-$KVER"
 UKI_DIR="/boot/efi/EFI/Linux"
 mkdir -p "$UKI_DIR"
 
-CMDLINE="root=UUID=$ROOT_UUID ro quiet splash mem_sleep_default=deep"
+EXTRA_CMDLINE="${ZORIN_KERNEL_EXTRA_CMDLINE:-}"
+CMDLINE="root=UUID=$ROOT_UUID ro quiet splash"
+if [[ -n "${EXTRA_CMDLINE// }" ]]; then
+  CMDLINE="${CMDLINE} ${EXTRA_CMDLINE}"
+fi
 
 ukify build \
   --linux "$VMLINUX" \
@@ -130,7 +137,11 @@ INITRD="/boot/initrd.img-${KVER}"
 UKI_DIR="/boot/efi/EFI/Linux"
 mkdir -p "$UKI_DIR" || exit 0
 
-CMDLINE="root=UUID=${ROOT_UUID} ro quiet splash mem_sleep_default=deep"
+EXTRA_CMDLINE="${ZORIN_KERNEL_EXTRA_CMDLINE:-}"
+CMDLINE="root=UUID=${ROOT_UUID} ro quiet splash"
+if [[ -n "${EXTRA_CMDLINE// }" ]]; then
+  CMDLINE="${CMDLINE} ${EXTRA_CMDLINE}"
+fi
 
 TMP="${UKI_DIR}/zorin.efi.tmp"
 if ukify build --linux "$VMLINUX" --initrd "$INITRD" --cmdline "$CMDLINE" --output "$TMP" >/dev/null 2>&1; then

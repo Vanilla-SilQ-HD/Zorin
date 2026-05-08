@@ -11,6 +11,25 @@
 
 ---
 
+## Безопасный старт для свежего dual-boot (рекомендуется)
+
+Для первой установки рядом с Windows 11 основной путь такой:
+
+```bash
+git clone https://github.com/Vanilla-SilQ-HD/Zorin.git
+cd Zorin/scripts
+chmod +x zorin-master.sh
+sudo ./zorin-master.sh --postinstall
+```
+
+- сначала клон и локальный просмотр скриптов;
+- запускать только `--postinstall`;
+- `--systemdboot` и `--all` не использовать как первый шаг на свежем dual-boot.
+
+> Для dual-boot сначала оставь стандартный GRUB, проверь что стабильно грузятся и Windows, и Zorin, и только потом рассматривай переход на systemd-boot.
+
+---
+
 ## Запуск без клонирования (curl)
 
 Скрипт **zorin-master.sh** самодостаточный — его можно запускать по однострочнику через `curl`. Сначала лучше просмотреть код: открой ссылку в браузере или выполни `curl -fsSL … | less`.
@@ -24,14 +43,14 @@ https://raw.githubusercontent.com/Vanilla-SilQ-HD/Zorin/main/scripts/zorin-maste
 **Примеры (подставь нужный режим):**
 
 ```bash
-# Полная настройка: postinstall → systemdboot → verify
-curl -fsSL https://raw.githubusercontent.com/Vanilla-SilQ-HD/Zorin/main/scripts/zorin-master.sh | sudo bash -s -- --all
-
-# Только пост-установка (пакеты, TLP, ZRAM, earlyoom, sysctl)
+# Только пост-установка (безопасный основной сценарий)
 curl -fsSL https://raw.githubusercontent.com/Vanilla-SilQ-HD/Zorin/main/scripts/zorin-master.sh | sudo bash -s -- --postinstall
 
-# Только загрузчик (systemd-boot + UKI, Windows default, Firmware скрыт)
+# Только загрузчик (advanced/experimental, не для первой установки dual-boot)
 curl -fsSL https://raw.githubusercontent.com/Vanilla-SilQ-HD/Zorin/main/scripts/zorin-master.sh | sudo bash -s -- --systemdboot
+
+# Полная цепочка (не как основной сценарий для свежего dual-boot)
+curl -fsSL https://raw.githubusercontent.com/Vanilla-SilQ-HD/Zorin/main/scripts/zorin-master.sh | sudo bash -s -- --all
 
 # Быстрая проверка (без sudo можно, но меньше деталей)
 curl -fsSL https://raw.githubusercontent.com/Vanilla-SilQ-HD/Zorin/main/scripts/zorin-master.sh | bash -s -- --verify
@@ -89,18 +108,22 @@ Zorin/
 | Режим | Описание | Локально | Через curl |
 |-------|----------|----------|------------|
 | **--postinstall** | Пакеты, TLP, ZRAM, earlyoom, sysctl. Без загрузчика. | `sudo ./zorin-master.sh --postinstall` | `curl -fsSL …/zorin-master.sh \| sudo bash -s -- --postinstall` |
-| **--systemdboot** | systemd-boot + UKI, Windows default, Firmware скрыт. | `sudo ./zorin-master.sh --systemdboot` | `curl -fsSL …/zorin-master.sh \| sudo bash -s -- --systemdboot` |
+| **--systemdboot** | **advanced/experimental**: systemd-boot + UKI, Windows default, Firmware скрыт. | `sudo ./zorin-master.sh --systemdboot` | `curl -fsSL …/zorin-master.sh \| sudo bash -s -- --systemdboot` |
 | **--verify** | Быстрая проверка (UEFI, loader, записи, UKI, hook). | `./zorin-master.sh --verify` | `curl -fsSL …/zorin-master.sh \| bash -s -- --verify` |
 | **--verify-plus** | + сервисы, mem_sleep, swap, sysctl, NVIDIA, батарея, NVMe. | `sudo ./zorin-master.sh --verify-plus` | `curl -fsSL …/zorin-master.sh \| sudo bash -s -- --verify-plus` |
 | **--check** | Предполётная проверка перед --systemdboot. | `./zorin-master.sh --check` | `curl -fsSL …/zorin-master.sh \| bash -s -- --check` |
-| **--all** | postinstall → systemdboot → verify. | `sudo ./zorin-master.sh --all` | `curl -fsSL …/zorin-master.sh \| sudo bash -s -- --all` |
+| **--all** | postinstall → systemdboot → verify (**не основной путь для свежего dual-boot**). | `sudo ./zorin-master.sh --all` | `curl -fsSL …/zorin-master.sh \| sudo bash -s -- --all` |
 
 При запуске с `sudo` вывод пишется в `/var/log/zorin-master.log`.
 
 ### Важно про --systemdboot
 
-- **Меняет загрузчик.** Запускай только когда Windows нормально грузится и ESP смонтирован на `/boot/efi`.
+- **Advanced/experimental.** Не рекомендуется для первой загрузки свежего dual-boot.
+- **Меняет загрузчик и BootOrder.** Запускай только когда Windows нормально грузится и ESP смонтирован на `/boot/efi`.
+- Для Windows dual-boot сначала оставь GRUB, проверь загрузку обеих ОС, и только потом переходи к `--systemdboot`.
 - Пункт **Firmware Settings** скрываем через `auto-firmware no`, не переименовываем.
+- Базовый CMDLINE безопасный по умолчанию: `root=UUID=... ro quiet splash`.  
+  Доп.параметры добавляются только вручную через `ZORIN_KERNEL_EXTRA_CMDLINE`.
 - Перед первым запуском полезно выполнить `--check`.
 
 ---
@@ -111,7 +134,7 @@ Zorin/
 git clone https://github.com/Vanilla-SilQ-HD/Zorin.git
 cd Zorin/scripts
 chmod +x zorin-master.sh
-sudo ./zorin-master.sh --postinstall   # пример
+sudo ./zorin-master.sh --postinstall   # безопасный базовый шаг
 ```
 
 Отдельные скрипты (без master):
@@ -127,6 +150,10 @@ sudo ./zorin-master.sh --postinstall   # пример
 `/var/log/zorin-postinstall.log` и `/var/log/zorin-systemdboot.log`.
 
 ### Zorin OS 18 Core → Pro (zorin.sh)
+
+> `zorin.sh` — отдельный **unsupported/non-official** сценарий Core→Pro.
+> Он не является частью безопасной post-install настройки для свежего dual-boot с Windows 11.
+> Для безопасного базового сценария используй только `zorin-master.sh --postinstall`.
 
 В этом репозитории лежит своя копия `zorin.sh` и все необходимые raw‑файлы, поэтому скрипт можно вызывать **напрямую из этого репо**.
 
@@ -192,7 +219,7 @@ bash <(curl -H 'DNT: 1' -H 'Sec-GPC: 1' -fsSL \
 
 **Риски:**
 
-- это неофициальный инструмент, имитирующий Premium‑систему (юридические/этические последствия — на пользователе);  
+- это неофициальный инструмент, имитирующий Premium‑систему (unsupported/non-official; юридические/этические последствия — на пользователе);  
 - серьёзное изменение репозиториев и большого числа пакетов → возможны конфликты при будущих обновлениях;  
 - флаг `-U` делает всё без переспросов — удобно, но снижает контроль.
 
@@ -269,7 +296,7 @@ cd ~/Downloads/jetbrains-toolbox/jetbrains-toolbox-<версия>
 Подключи опциональный профиль из `configs/tlp-battery.conf` или `configs/tlp-performance.conf`.
 
 **Проверка скриптов в CI.**  
-При push/PR в `main` запускается ShellCheck для `scripts/*.sh`.
+При push/PR в `main` запускается ShellCheck для `scripts/*.sh`, а также для `zorin.sh` и `make_dummy_deb.sh`.
 
 ---
 

@@ -17,7 +17,7 @@ echo "== Zorin post-install: performance + power (safe) =="
 
 echo "[1/9] Update system"
 apt-get update
-apt_safe full-upgrade
+apt_safe upgrade
 
 echo "[2/9] Install essential packages (safe, useful)"
 apt_safe install \
