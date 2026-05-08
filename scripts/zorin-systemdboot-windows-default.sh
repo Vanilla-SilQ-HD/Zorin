@@ -14,6 +14,12 @@ apt_safe() {
 }
 
 need_root
+if [[ "${ZORIN_ALLOW_BOOTLOADER_CHANGE:-}" != "YES" ]]; then
+  echo "WARNING: Safety gate active. Bootloader changes are blocked by default."
+  echo "To continue intentionally, run:"
+  echo "  sudo ZORIN_ALLOW_BOOTLOADER_CHANGE=YES bash scripts/zorin-systemdboot-windows-default.sh"
+  exit 1
+fi
 echo "== systemd-boot + UKI (Windows default, firmware hidden) =="
 echo "WARNING: ADVANCED/EXPERIMENTAL path."
 echo "WARNING: This changes bootloader and UEFI BootOrder."
@@ -155,7 +161,7 @@ EOF
 chmod +x "$HOOK"
 
 echo "[11/11] Put 'Linux Boot Manager' first in UEFI BootOrder (menu control)"
-LBM="$(efibootmgr | awk -F'[* ]' '/Linux Boot Manager/ {print $1}' | sed 's/Boot//' | head -n1)"
+LBM="$(efibootmgr | awk -F'[* ]' '/Linux Boot Manager/ {print $1}' | sed 's/Boot//' | head -n1 || true)"
 if [[ -n "${LBM:-}" ]]; then
   CUR="$(efibootmgr | awk -F'Order: ' '/BootOrder/ {print $2}' | tr -d '[:space:]' || true)"
   if [[ -n "${CUR:-}" ]]; then

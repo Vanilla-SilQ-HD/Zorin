@@ -24,7 +24,7 @@ sudo ./zorin-master.sh --postinstall
 
 - сначала клон и локальный просмотр скриптов;
 - запускать только `--postinstall`;
-- `--systemdboot` и `--all` не использовать как первый шаг на свежем dual-boot.
+- `--systemdboot` не использовать как первый шаг на свежем dual-boot.
 
 > Для dual-boot сначала оставь стандартный GRUB, проверь что стабильно грузятся и Windows, и Zorin, и только потом рассматривай переход на systemd-boot.
 
@@ -49,7 +49,7 @@ curl -fsSL https://raw.githubusercontent.com/Vanilla-SilQ-HD/Zorin/main/scripts/
 # Только загрузчик (advanced/experimental, не для первой установки dual-boot)
 curl -fsSL https://raw.githubusercontent.com/Vanilla-SilQ-HD/Zorin/main/scripts/zorin-master.sh | sudo bash -s -- --systemdboot
 
-# Полная цепочка (не как основной сценарий для свежего dual-boot)
+# Безопасный all-режим (без изменения загрузчика): postinstall → verify
 curl -fsSL https://raw.githubusercontent.com/Vanilla-SilQ-HD/Zorin/main/scripts/zorin-master.sh | sudo bash -s -- --all
 
 # Быстрая проверка (без sudo можно, но меньше деталей)
@@ -112,7 +112,7 @@ Zorin/
 | **--verify** | Быстрая проверка (UEFI, loader, записи, UKI, hook). | `./zorin-master.sh --verify` | `curl -fsSL …/zorin-master.sh \| bash -s -- --verify` |
 | **--verify-plus** | + сервисы, mem_sleep, swap, sysctl, NVIDIA, батарея, NVMe. | `sudo ./zorin-master.sh --verify-plus` | `curl -fsSL …/zorin-master.sh \| sudo bash -s -- --verify-plus` |
 | **--check** | Предполётная проверка перед --systemdboot. | `./zorin-master.sh --check` | `curl -fsSL …/zorin-master.sh \| bash -s -- --check` |
-| **--all** | postinstall → systemdboot → verify (**не основной путь для свежего dual-boot**). | `sudo ./zorin-master.sh --all` | `curl -fsSL …/zorin-master.sh \| sudo bash -s -- --all` |
+| **--all** | Безопасный all-режим: postinstall → verify (**без изменения загрузчика**). | `sudo ./zorin-master.sh --all` | `curl -fsSL …/zorin-master.sh \| sudo bash -s -- --all` |
 
 При запуске с `sudo` вывод пишется в `/var/log/zorin-master.log`.
 
@@ -121,6 +121,7 @@ Zorin/
 - **Advanced/experimental.** Не рекомендуется для первой загрузки свежего dual-boot.
 - **Меняет загрузчик и BootOrder.** Запускай только когда Windows нормально грузится и ESP смонтирован на `/boot/efi`.
 - Для Windows dual-boot сначала оставь GRUB, проверь загрузку обеих ОС, и только потом переходи к `--systemdboot`.
+- Для запуска `--systemdboot` нужен явный флаг подтверждения: `ZORIN_ALLOW_BOOTLOADER_CHANGE=YES`.
 - Пункт **Firmware Settings** скрываем через `auto-firmware no`, не переименовываем.
 - Базовый CMDLINE безопасный по умолчанию: `root=UUID=... ro quiet splash`.  
   Доп.параметры добавляются только вручную через `ZORIN_KERNEL_EXTRA_CMDLINE`.
@@ -155,48 +156,8 @@ sudo ./zorin-master.sh --postinstall   # безопасный базовый ш�
 > Он не является частью безопасной post-install настройки для свежего dual-boot с Windows 11.
 > Для безопасного базового сценария используй только `zorin-master.sh --postinstall`.
 
-В этом репозитории лежит своя копия `zorin.sh` и все необходимые raw‑файлы, поэтому скрипт можно вызывать **напрямую из этого репо**.
-
-```bash
-# Базовый вызов (Zorin OS 18 Core, определение версии по флагу -8)
-bash <(curl -H 'DNT: 1' -H 'Sec-GPC: 1' -fsSL \
-  https://github.com/Vanilla-SilQ-HD/Zorin/raw/refs/heads/main/zorin.sh) [флаги]
-```
-
-- **-8** — жёстко указать, что система = Zorin OS 18 Core (рекомендуется всегда указывать).
-- **-X** — Extra‑контент: кроме базового Pro‑набора ставит большой набор доп. приложений (APT + Flatpak).  
-  Если какое‑то Flatpak‑приложение не встанет — будет `Warning`, скрипт продолжит.
-- **-U** — unattended: все apt/flatpak‑установки без вопросов (`-y`).
-
-**Флаги `zorin.sh`:**
-
-| Флаг | Значение | Комментарий |
-|------|----------|-------------|
-| `-6` | Zorin OS 16 Core | Жёстко задать версию 16 (иначе пытается угадать по `VERSION_ID`). |
-| `-7` | Zorin OS 17 Core | Жёстко задать версию 17. |
-| `-8` | Zorin OS 18 Core | Жёстко задать версию 18 (для тебя основной режим). |
-| `-X` | Extra‑контент | Добавляет к базовому Pro‑набору большой пакет доп. софта (APT + Flatpak). |
-| `-U` | Unattended | Все установки без вопросов (`-y`), удобно для автоматизации, но меньше контроля. |
-
-**Практические варианты для Zorin 18 Core:**
-
-```bash
-# 1) Минимальный Pro (внешний вид + Pro‑фичи), с подтверждениями:
-bash <(curl -H 'DNT: 1' -H 'Sec-GPC: 1' -fsSL \
-  https://github.com/Vanilla-SilQ-HD/Zorin/raw/refs/heads/main/zorin.sh) -8
-
-# 2) То же, но полностью без вопросов:
-bash <(curl -H 'DNT: 1' -H 'Sec-GPC: 1' -fsSL \
-  https://github.com/Vanilla-SilQ-HD/Zorin/raw/refs/heads/main/zorin.sh) -8 -U
-
-# 3) Полный Pro + Extra, с подтверждениями:
-bash <(curl -H 'DNT: 1' -H 'Sec-GPC: 1' -fsSL \
-  https://github.com/Vanilla-SilQ-HD/Zorin/raw/refs/heads/main/zorin.sh) -8 -X
-
-# 4) Полный Pro + Extra, полностью тихо:
-bash <(curl -H 'DNT: 1' -H 'Sec-GPC: 1' -fsSL \
-  https://github.com/Vanilla-SilQ-HD/Zorin/raw/refs/heads/main/zorin.sh) -8 -X -U
-```
+В репозитории есть своя копия `zorin.sh` и raw‑файлы, но сценарий остаётся отдельным и рискованным.  
+Если он всё же нужен, сначала изучи код и риски; в README намеренно нет готовых copy-paste команд для его запуска.
 
 **Перед запуском:**
 

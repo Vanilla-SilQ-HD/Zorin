@@ -21,7 +21,7 @@ set -euo pipefail
 #   --systemdboot   advanced/experimental: systemd-boot + UKI, Windows по умолчанию.
 #   --verify        Быстрая проверка (можно без sudo).
 #   --verify-plus   Расширенная проверка (NVIDIA, батарея, NVMe, sleep).
-#   --all           postinstall → systemdboot → verify (не для первой установки dual-boot).
+#   --all           postinstall → verify (без изменения загрузчика, безопасный all-режим).
 #
 # Важно:
 #   --systemdboot меняет загрузчик. Безопасно при UEFI, но запускай, когда
@@ -231,6 +231,12 @@ EOF
 # =========================
 do_systemdboot() {
   need_root "$@"
+  if [[ "${ZORIN_ALLOW_BOOTLOADER_CHANGE:-}" != "YES" ]]; then
+    warn "Safety gate: bootloader changes are blocked by default."
+    warn "To continue intentionally, run:"
+    warn "  sudo ZORIN_ALLOW_BOOTLOADER_CHANGE=YES ./zorin-master.sh --systemdboot"
+    exit 1
+  fi
   info "== SYSTEMD-BOOT: Windows default + UKI + firmware hidden =="
   warn "ADVANCED/EXPERIMENTAL: это меняет bootloader и UEFI BootOrder."
   warn "Для первой загрузки свежего Windows dual-boot не рекомендуется."
@@ -525,11 +531,12 @@ Usage:
   sudo ./${SCRIPT_NAME}.sh --systemdboot   # ADVANCED/EXPERIMENTAL: меняет загрузчик и BootOrder
        ./${SCRIPT_NAME}.sh --verify        # быстрая проверка
   sudo ./${SCRIPT_NAME}.sh --verify-plus   # расширенная проверка (NVIDIA, батарея, NVMe, sleep)
-  sudo ./${SCRIPT_NAME}.sh --all          # postinstall → systemdboot → verify (не для первого dual-boot запуска)
+  sudo ./${SCRIPT_NAME}.sh --all          # postinstall → verify (без изменения загрузчика)
        ./${SCRIPT_NAME}.sh --check        # предполётная проверка перед --systemdboot
 
 Важно: для свежего dual-boot сначала оставь GRUB и проверь загрузку Windows/Zorin.
         --systemdboot меняет загрузчик и BootOrder. Запускай, когда Windows грузится и ESP на месте.
+        Для --systemdboot требуется: ZORIN_ALLOW_BOOTLOADER_CHANGE=YES
         Firmware скрыт через auto-firmware no (не переименовываем).
         Доп. параметры ядра можно добавить через ZORIN_KERNEL_EXTRA_CMDLINE.
 Логи (при запуске с sudo): $LOG_FILE
@@ -563,7 +570,6 @@ main() {
       ;;
     --all)
       do_postinstall "$@"
-      do_systemdboot "$@"
       do_verify
       ok "ALL done. Reboot recommended."
       ;;
